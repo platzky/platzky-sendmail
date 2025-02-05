@@ -66,7 +66,7 @@ def process(app: Any, config: Dict[str, Any]) -> Any:
         raise ValidationError(
             "Invalid plugin configuration",
             errors=e.errors()
-        )
+        ) from e
 
     def notify(message):
         send_mail(
