@@ -12,22 +12,66 @@ def send_mail(sender_email, password, smtp_server, port, receiver_email, subject
     server.close()
 
 
+from pydantic import EmailStr, SecretStr, conint
+
 class SendMailConfig(BaseModel):
-    user: str = Field(alias="sender_email")
-    password: str = Field(alias="password")
-    server: str = Field(alias="smtp_server")
-    port: int = Field(alias="port")
-    receiver: str = Field(alias="receiver_email")
-    subject: str = Field(alias="subject")
+    """Configuration for email sending functionality."""
+    user: EmailStr = Field(
+        alias="sender_email",
+        description="Email address to send from"
+    )
+    password: SecretStr = Field(
+        alias="password",
+        description="Password for authentication"
+    )
+    server: str = Field(
+        alias="smtp_server",
+        description="SMTP server hostname",
+        min_length=1
+    )
+    port: conint(gt=0, lt=65536) = Field(
+        alias="port",
+        description="SMTP server port"
+    )
+    receiver: EmailStr = Field(
+        alias="receiver_email",
+        description="Email address to send to"
+    )
+    subject: str = Field(
+        alias="subject",
+        description="Email subject",
+        min_length=1
+    )
 
 
-def process(app, config):
-    plugin_config = SendMailConfig.model_validate(config)
+from typing import Any, Dict
+from pydantic import ValidationError
+
+def process(app: Any, config: Dict[str, Any]) -> Any:
+    """Initialize the email notification plugin.
+    
+    Args:
+        app: The application instance
+        config: Plugin configuration dictionary
+        
+    Returns:
+        The application instance
+        
+    Raises:
+        ValidationError: If configuration is invalid
+    """
+    try:
+        plugin_config = SendMailConfig.model_validate(config)
+    except ValidationError as e:
+        raise ValidationError(
+            "Invalid plugin configuration",
+            errors=e.errors()
+        )
 
     def notify(message):
         send_mail(
             sender_email=plugin_config.user,
-            password=plugin_config.password,
+            password=plugin_config.password.get_secret_value(),
             smtp_server=plugin_config.server,
             port=plugin_config.port,
             receiver_email=plugin_config.receiver,
