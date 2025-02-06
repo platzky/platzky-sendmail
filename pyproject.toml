@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "platzky_sendmail"
-version = "0.1.0"
+version = "0.1.1"
 description = ""
 authors = []
 license = "MIT"
@@ -8,7 +8,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-pydantic = "^2.10.3"
+pydantic = {extras = ["email"], version = "^2.10.6"}
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.4"

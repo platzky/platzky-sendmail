@@ -3,17 +3,24 @@ from typing_extensions import Annotated
 from pydantic import BaseModel, Field, EmailStr, SecretStr, ValidationError
 from typing import Any, Dict
 
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.header import Header
+
 
 def send_mail(
     sender_email, password, smtp_server, port, receiver_email, subject, message
 ):
-    full_message = (
-        f"From: {sender_email}\nTo: {receiver_email}\nSubject: {subject}\n\n{message}"
-    )
+    msg = MIMEMultipart()
+    msg["From"] = sender_email
+    msg["To"] = receiver_email
+    msg["Subject"] = str(Header(subject, "utf-8"))
+    msg.attach(MIMEText(message, "plain", "utf-8"))
+
     server = smtplib.SMTP_SSL(smtp_server, port)
     server.ehlo()
     server.login(sender_email, password)
-    server.sendmail(sender_email, receiver_email, full_message)
+    server.sendmail(sender_email, receiver_email, msg.as_string())
     server.close()
 
 

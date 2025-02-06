@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
 from platzky_sendmail.entrypoint import send_mail, process
+import base64
 
 
 @pytest.fixture
@@ -33,11 +34,17 @@ def test_that_sends_email_successfully(valid_config):
         mock_server.login.assert_called_once_with(
             valid_config["sender_email"], valid_config["password"]
         )
-        mock_server.sendmail.assert_called_once_with(
-            valid_config["sender_email"],
-            valid_config["receiver_email"],
-            f"From: {valid_config['sender_email']}\nTo: {valid_config['receiver_email']}\nSubject: {valid_config['subject']}\n\nTest Message",
-        )
+        mock_server.sendmail.assert_called_once()
+        sent_message = mock_server.sendmail.call_args[0][2]
+        assert "Content-Type: multipart/mixed" in sent_message
+        assert "From: test@example.com" in sent_message
+        assert "To: receiver@example.com" in sent_message
+        assert "Subject: Test Subject" in sent_message
+        # Decode the base64 content
+        start = sent_message.find("VGVzdCBNZXNzYWdl")
+        end = sent_message.find("\n\n--", start)
+        decoded_message = base64.b64decode(sent_message[start:end]).decode("utf-8")
+        assert "Test Message" in decoded_message
         mock_server.close.assert_called_once()
 
 
@@ -82,9 +89,15 @@ def test_notifier_sends_email(valid_config):
         mock_server.login.assert_called_once_with(
             valid_config["sender_email"], valid_config["password"]
         )
-        mock_server.sendmail.assert_called_once_with(
-            valid_config["sender_email"],
-            valid_config["receiver_email"],
-            f"From: {valid_config['sender_email']}\nTo: {valid_config['receiver_email']}\nSubject: {valid_config['subject']}\n\nTest Message",
-        )
+        mock_server.sendmail.assert_called_once()
+        sent_message = mock_server.sendmail.call_args[0][2]
+        assert "Content-Type: multipart/mixed" in sent_message
+        assert "From: test@example.com" in sent_message
+        assert "To: receiver@example.com" in sent_message
+        assert "Subject: Test Subject" in sent_message
+        # Decode the base64 content
+        start = sent_message.find("VGVzdCBNZXNzYWdl")
+        end = sent_message.find("\n\n--", start)
+        decoded_message = base64.b64decode(sent_message[start:end]).decode("utf-8")
+        assert "Test Message" in decoded_message
         mock_server.close.assert_called_once()
