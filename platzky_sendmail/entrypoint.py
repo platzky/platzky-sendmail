@@ -14,8 +14,7 @@ def send_mail(
     msg = MIMEMultipart()
     msg["From"] = sender_email
     msg["To"] = receiver_email
-    msg["Subject"] = Header(subject, "utf-8")
-
+    msg["Subject"] = str(Header(subject, "utf-8"))
     msg.attach(MIMEText(message, "plain", "utf-8"))
 
     server = smtplib.SMTP_SSL(smtp_server, port)
