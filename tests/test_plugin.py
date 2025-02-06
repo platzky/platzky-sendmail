@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from platzky_sendmail.entrypoint import send_mail, process, SendMailConfig
+from platzky_sendmail.entrypoint import send_mail, process
+
 
 @pytest.fixture
 def valid_config():
@@ -10,8 +11,9 @@ def valid_config():
         "smtp_server": "smtp.example.com",
         "port": 465,
         "receiver_email": "receiver@example.com",
-        "subject": "Test Subject"
+        "subject": "Test Subject",
     }
+
 
 def test_that_sends_email_successfully(valid_config):
     with patch("smtplib.SMTP_SSL") as mock_smtp:
@@ -25,16 +27,19 @@ def test_that_sends_email_successfully(valid_config):
             port=valid_config["port"],
             receiver_email=valid_config["receiver_email"],
             subject=valid_config["subject"],
-            message="Test Message"
+            message="Test Message",
         )
 
-        mock_server.login.assert_called_once_with(valid_config["sender_email"], valid_config["password"])
+        mock_server.login.assert_called_once_with(
+            valid_config["sender_email"], valid_config["password"]
+        )
         mock_server.sendmail.assert_called_once_with(
             valid_config["sender_email"],
             valid_config["receiver_email"],
-            f"From: {valid_config['sender_email']}\nTo: {valid_config['receiver_email']}\nSubject: {valid_config['subject']}\n\nTest Message"
+            f"From: {valid_config['sender_email']}\nTo: {valid_config['receiver_email']}\nSubject: {valid_config['subject']}\n\nTest Message",
         )
         mock_server.close.assert_called_once()
+
 
 def test_that_raises_exception_on_invalid_smtp_server(valid_config):
     with patch("smtplib.SMTP_SSL", side_effect=Exception("Invalid SMTP server")):
@@ -46,8 +51,9 @@ def test_that_raises_exception_on_invalid_smtp_server(valid_config):
                 port=valid_config["port"],
                 receiver_email=valid_config["receiver_email"],
                 subject=valid_config["subject"],
-                message="Test Message"
+                message="Test Message",
             )
+
 
 def test_process_adds_notifier_to_app(valid_config):
     app = MagicMock()
@@ -58,6 +64,7 @@ def test_process_adds_notifier_to_app(valid_config):
     app.add_notifier.assert_called_once()
     notifier = app.add_notifier.call_args[0][0]
     assert callable(notifier)
+
 
 def test_notifier_sends_email(valid_config):
     app = MagicMock()
@@ -72,10 +79,12 @@ def test_notifier_sends_email(valid_config):
 
         notifier("Test Message")
 
-        mock_server.login.assert_called_once_with(valid_config["sender_email"], valid_config["password"])
+        mock_server.login.assert_called_once_with(
+            valid_config["sender_email"], valid_config["password"]
+        )
         mock_server.sendmail.assert_called_once_with(
             valid_config["sender_email"],
             valid_config["receiver_email"],
-            f"From: {valid_config['sender_email']}\nTo: {valid_config['receiver_email']}\nSubject: {valid_config['subject']}\n\nTest Message"
+            f"From: {valid_config['sender_email']}\nTo: {valid_config['receiver_email']}\nSubject: {valid_config['subject']}\n\nTest Message",
         )
         mock_server.close.assert_called_once()
