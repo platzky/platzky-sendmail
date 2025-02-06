@@ -7,15 +7,16 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.header import Header
 
+
 def send_mail(
     sender_email, password, smtp_server, port, receiver_email, subject, message
 ):
     msg = MIMEMultipart()
-    msg['From'] = sender_email
-    msg['To'] = receiver_email
-    msg['Subject'] = Header(subject, 'utf-8')
+    msg["From"] = sender_email
+    msg["To"] = receiver_email
+    msg["Subject"] = Header(subject, "utf-8")
 
-    msg.attach(MIMEText(message, 'plain', 'utf-8'))
+    msg.attach(MIMEText(message, "plain", "utf-8"))
 
     server = smtplib.SMTP_SSL(smtp_server, port)
     server.ehlo()
