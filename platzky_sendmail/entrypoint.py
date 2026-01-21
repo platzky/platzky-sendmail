@@ -1,11 +1,12 @@
 import smtplib
 from typing_extensions import Annotated
-from pydantic import BaseModel, Field, EmailStr, SecretStr, ValidationError
-from typing import Any, Dict
+from pydantic import Field, EmailStr, SecretStr
 
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.header import Header
+
+from platzky.plugin.plugin import PluginBase, PluginBaseConfig
 
 
 def send_mail(
@@ -24,7 +25,7 @@ def send_mail(
     server.close()
 
 
-class SendMailConfig(BaseModel):
+class SendMailConfig(PluginBaseConfig):
     """Configuration for email sending functionality."""
 
     user: EmailStr = Field(
@@ -45,34 +46,34 @@ class SendMailConfig(BaseModel):
     subject: str = Field(alias="subject", description="Email subject", min_length=1)
 
 
-def process(app: Any, config: Dict[str, Any]) -> Any:
-    """Initialize the email notification plugin.
+class SendMailPlugin(PluginBase[SendMailConfig]):
+    """Email notification plugin for Platzky."""
 
-    Args:
-        app: The application instance
-        config: Plugin configuration dictionary
+    @classmethod
+    def get_config_model(cls) -> type[SendMailConfig]:
+        return SendMailConfig
 
-    Returns:
-        The application instance
+    def process(self, app):
+        """Initialize the email notification plugin.
 
-    Raises:
-        ValidationError: If configuration is invalid
-    """
-    try:
-        plugin_config = SendMailConfig.model_validate(config)
-    except ValidationError as e:
-        raise ValidationError(f"Invalid plugin configuration: {str(e)}")
+        Args:
+            app: The Platzky engine instance
 
-    def notify(message):
-        send_mail(
-            sender_email=plugin_config.user,
-            password=plugin_config.password.get_secret_value(),
-            smtp_server=plugin_config.server,
-            port=plugin_config.port,
-            receiver_email=plugin_config.receiver,
-            subject=plugin_config.subject,
-            message=message,
-        )
+        Returns:
+            The engine instance with notifier added
+        """
+        config = self.config
 
-    app.add_notifier(notify)
-    return app
+        def notify(message):
+            send_mail(
+                sender_email=config.user,
+                password=config.password.get_secret_value(),
+                smtp_server=config.server,
+                port=config.port,
+                receiver_email=config.receiver,
+                subject=config.subject,
+                message=message,
+            )
+
+        app.add_notifier(notify)
+        return app

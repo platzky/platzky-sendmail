@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from platzky_sendmail.entrypoint import send_mail, process
+from platzky_sendmail.entrypoint import send_mail, SendMailPlugin
 import base64
 
 
@@ -66,7 +66,8 @@ def test_process_adds_notifier_to_app(valid_config):
     app = MagicMock()
     config = valid_config
 
-    process(app, config)
+    plugin = SendMailPlugin(config)
+    plugin.process(app)
 
     app.add_notifier.assert_called_once()
     notifier = app.add_notifier.call_args[0][0]
@@ -77,7 +78,8 @@ def test_notifier_sends_email(valid_config):
     app = MagicMock()
     config = valid_config
 
-    process(app, config)
+    plugin = SendMailPlugin(config)
+    plugin.process(app)
     notifier = app.add_notifier.call_args[0][0]
 
     with patch("smtplib.SMTP_SSL") as mock_smtp:
