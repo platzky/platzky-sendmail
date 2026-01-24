@@ -58,7 +58,9 @@ def send_mail(
                 filename=attachment.filename,
             )
             msg.attach(part)
-            logger.debug("Attached file: %s (%s)", attachment.filename, attachment.mime_type)
+            logger.debug(
+                "Attached file: %s (%s)", attachment.filename, attachment.mime_type
+            )
 
     logger.debug("Connecting to SMTP server %s:%d", smtp_server, port)
     server = smtplib.SMTP_SSL(smtp_server, port)
@@ -136,4 +138,3 @@ class SendMailPlugin(PluginBase[SendMailConfig]):
 
         app.add_notifier_with_attachments(notify)
         return app
-
