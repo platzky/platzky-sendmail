@@ -1,6 +1,6 @@
 import logging
 import smtplib
-from typing_extensions import Annotated
+from typing import Annotated
 from pydantic import Field, EmailStr, SecretStr
 
 from email.mime.text import MIMEText
@@ -48,7 +48,16 @@ def send_mail(
     if attachments:
         logger.debug("Adding %d attachment(s)", len(attachments))
         for attachment in attachments:
-            maintype, subtype = attachment.mime_type.split("/", 1)
+            parts = attachment.mime_type.split("/", 1)
+            if len(parts) != 2:
+                logger.warning(
+                    "Invalid MIME type '%s' for %s, defaulting to application/octet-stream",
+                    attachment.mime_type,
+                    attachment.filename,
+                )
+                maintype, subtype = "application", "octet-stream"
+            else:
+                maintype, subtype = parts
             part = MIMEBase(maintype, subtype)
             part.set_payload(attachment.content)
             encoders.encode_base64(part)
@@ -63,11 +72,10 @@ def send_mail(
             )
 
     logger.debug("Connecting to SMTP server %s:%d", smtp_server, port)
-    server = smtplib.SMTP_SSL(smtp_server, port)
-    server.ehlo()
-    server.login(sender_email, password)
-    server.sendmail(sender_email, receiver_email, msg.as_string())
-    server.close()
+    with smtplib.SMTP_SSL(smtp_server, port) as server:
+        server.ehlo()
+        server.login(sender_email, password)
+        server.sendmail(sender_email, receiver_email, msg.as_string())
     logger.info("Email sent successfully to %s", receiver_email)
 
 

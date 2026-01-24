@@ -21,7 +21,7 @@ def valid_config():
 def test_that_sends_email_successfully(valid_config):
     with patch("smtplib.SMTP_SSL") as mock_smtp:
         mock_server = MagicMock()
-        mock_smtp.return_value = mock_server
+        mock_smtp.return_value.__enter__.return_value = mock_server
 
         send_mail(
             sender_email=valid_config["sender_email"],
@@ -47,7 +47,6 @@ def test_that_sends_email_successfully(valid_config):
         end = sent_message.find("\n\n--", start)
         decoded_message = base64.b64decode(sent_message[start:end]).decode("utf-8")
         assert "Test Message" in decoded_message
-        mock_server.close.assert_called_once()
 
 
 def test_that_raises_exception_on_invalid_smtp_server(valid_config):
@@ -86,7 +85,7 @@ def test_notifier_sends_email(valid_config):
 
     with patch("smtplib.SMTP_SSL") as mock_smtp:
         mock_server = MagicMock()
-        mock_smtp.return_value = mock_server
+        mock_smtp.return_value.__enter__.return_value = mock_server
 
         notifier("Test Message")
 
@@ -104,7 +103,6 @@ def test_notifier_sends_email(valid_config):
         end = sent_message.find("\n\n--", start)
         decoded_message = base64.b64decode(sent_message[start:end]).decode("utf-8")
         assert "Test Message" in decoded_message
-        mock_server.close.assert_called_once()
 
 
 def test_send_mail_with_attachment(valid_config):
@@ -117,7 +115,7 @@ def test_send_mail_with_attachment(valid_config):
 
     with patch("smtplib.SMTP_SSL") as mock_smtp:
         mock_server = MagicMock()
-        mock_smtp.return_value = mock_server
+        mock_smtp.return_value.__enter__.return_value = mock_server
 
         send_mail(
             sender_email=valid_config["sender_email"],
@@ -148,7 +146,7 @@ def test_notifier_sends_email_with_attachment(valid_config):
 
     with patch("smtplib.SMTP_SSL") as mock_smtp:
         mock_server = MagicMock()
-        mock_smtp.return_value = mock_server
+        mock_smtp.return_value.__enter__.return_value = mock_server
 
         notifier("Test Message", attachments=[attachment])
 
