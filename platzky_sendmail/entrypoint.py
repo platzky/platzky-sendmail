@@ -1,6 +1,6 @@
 import logging
 import smtplib
-from typing import Annotated
+from typing import Annotated, cast
 from pydantic import Field, EmailStr, SecretStr
 
 from email.mime.text import MIMEText
@@ -116,13 +116,13 @@ class SendMailPlugin(PluginBase[SendMailConfig]):
         Returns:
             The engine instance with notifier added
         """
+        config = cast(SendMailConfig, self.config)
         logger.info(
             "Initializing SendMailPlugin: server=%s, sender=%s, receiver=%s",
-            self.config.server,
-            self.config.user,
-            self.config.receiver,
+            config.server,
+            config.user,
+            config.receiver,
         )
-        config = self.config
 
         def notify(
             message: str, attachments: list[AttachmentProtocol] | None = None
