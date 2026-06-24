@@ -13,7 +13,7 @@ jobs:
       with:
         python-version: "3.14"
     - name: Install Poetry
-      run: pipx install poetry==2.0.1
+      run: pipx install poetry==2.0.1 --python "$(which python)"
     - name: Install dependencies
       run: poetry env use $(which python) && poetry install
     - name: Run linters
