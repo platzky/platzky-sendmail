@@ -13,9 +13,9 @@ jobs:
       with:
         python-version: "3.14"
     - name: Install Poetry
-      run: pipx install poetry==2.0.1 --python "$(which python)"
+      run: pip install poetry==2.0.1
     - name: Install dependencies
-      run: poetry env use $(which python) && poetry install
+      run: poetry install
     - name: Run tests with coverage
       run: make coverage
     - name: Coverage summary
