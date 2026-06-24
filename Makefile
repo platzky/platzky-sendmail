@@ -1,3 +1,5 @@
+.PHONY: lint dev lint-check unit-tests coverage html-cov build compile-translations update-translations
+
 lint:
 	poetry run black .
 	poetry run ruff check --fix .
@@ -9,16 +11,24 @@ lint-check:
 	poetry run black --check .
 	poetry run ruff check .
 	poetry run pyright .
+	poetry run interrogate platzky_sendmail/ --verbose
 
 unit-tests:
 	poetry run python -m pytest -v
 
 coverage:
 	poetry run coverage run --branch --source=platzky_sendmail -m pytest -m "not skip_coverage"
-	poetry run coverage lcov
+	poetry run coverage report --fail-under=90
 
 html-cov: coverage
 	poetry run coverage html
 
-build:
+build: compile-translations
 	poetry build
+
+compile-translations:
+	poetry run pybabel compile -d platzky_sendmail/locale
+
+update-translations:
+	poetry run pybabel extract -F babel.cfg -o messages.pot platzky_sendmail/
+	poetry run pybabel update -i messages.pot -d platzky_sendmail/locale
