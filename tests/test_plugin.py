@@ -1,4 +1,5 @@
 import base64
+import ssl
 from typing import TypedDict
 from unittest.mock import MagicMock, patch
 
@@ -6,7 +7,12 @@ import pytest
 from platzky.attachment import Attachment
 from platzky.plugin.notifier import Notification, NotifierPluginBase
 
-from platzky_sendmail.plugin import AttachmentSizeError, SendMailPlugin, send_mail
+from platzky_sendmail.plugin import (
+    DEFAULT_SMTP_TIMEOUT,
+    AttachmentSizeError,
+    SendMailPlugin,
+    send_mail,
+)
 
 
 class MailConfig(TypedDict):
@@ -223,10 +229,13 @@ def test_send_mail_uses_starttls_on_port_587(valid_config: MailConfig) -> None:
             message="Test Message",
         )
 
-        # Verify SMTP (not SMTP_SSL) was used
-        mock_smtp.assert_called_once_with(valid_config["smtp_server"], 587)
-        # Verify STARTTLS was called
+        # Verify SMTP (not SMTP_SSL) was used, with an explicit timeout
+        mock_smtp.assert_called_once_with(
+            valid_config["smtp_server"], 587, timeout=DEFAULT_SMTP_TIMEOUT
+        )
+        # Verify STARTTLS was called with an explicit TLS context
         mock_server.starttls.assert_called_once()
+        assert isinstance(mock_server.starttls.call_args.kwargs["context"], ssl.SSLContext)
         # Verify login and send
         mock_server.login.assert_called_once_with(
             valid_config["sender_email"], valid_config["password"]
@@ -250,8 +259,12 @@ def test_send_mail_uses_ssl_on_port_465(valid_config: MailConfig) -> None:
             message="Test Message",
         )
 
-        # Verify SMTP_SSL was used
-        mock_smtp_ssl.assert_called_once_with(valid_config["smtp_server"], 465)
+        # Verify SMTP_SSL was used with an explicit timeout and TLS context
+        mock_smtp_ssl.assert_called_once()
+        args = mock_smtp_ssl.call_args
+        assert args.args == (valid_config["smtp_server"], 465)
+        assert args.kwargs["timeout"] == DEFAULT_SMTP_TIMEOUT
+        assert isinstance(args.kwargs["context"], ssl.SSLContext)
         # Verify login and send (no starttls call)
         mock_server.login.assert_called_once()
         mock_server.sendmail.assert_called_once()

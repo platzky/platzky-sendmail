@@ -2,6 +2,7 @@
 
 import logging
 import smtplib
+import ssl
 from collections.abc import Sequence
 from email import encoders
 from email.header import Header
@@ -18,6 +19,7 @@ from pydantic import BaseModel, EmailStr, Field, SecretStr
 logger = logging.getLogger("platzky.sendmail")
 
 DEFAULT_MAX_TOTAL_ATTACHMENT_SIZE = 25 * 1024 * 1024  # 25MB
+DEFAULT_SMTP_TIMEOUT = 30  # seconds
 
 
 class AttachmentSizeError(Exception):
@@ -36,6 +38,7 @@ def send_mail(
     message: str,
     attachments: Sequence[Attachment] | None = None,
     max_total_attachment_size: int = DEFAULT_MAX_TOTAL_ATTACHMENT_SIZE,
+    timeout: float = DEFAULT_SMTP_TIMEOUT,
 ) -> None:
     """Send an email with optional attachments.
 
@@ -49,11 +52,13 @@ def send_mail(
         message: Email body text
         attachments: Optional list of Attachment objects
         max_total_attachment_size: Maximum total size of all attachments in bytes
+        timeout: Socket timeout in seconds for the SMTP connection
 
     Raises:
         AttachmentSizeError: If total attachment size exceeds the limit
     """
-    logger.info("Preparing email to %s with subject '%s'", receiver_email, subject)
+    logger.info("Preparing email for delivery")
+    logger.debug("Email to=%s subject=%r", receiver_email, subject)
 
     safe_subject = subject.replace("\r", "").replace("\n", " ")
 
@@ -98,27 +103,28 @@ def send_mail(
             logger.debug("Attached file: %s (%s)", attachment.filename, attachment.mime_type)
 
     logger.debug("Connecting to SMTP server %s:%d", smtp_server, port)
+    context = ssl.create_default_context()
     try:
         if port == 465:
             logger.debug("Using SMTP_SSL (implicit TLS)")
-            with smtplib.SMTP_SSL(smtp_server, port) as server:
+            with smtplib.SMTP_SSL(smtp_server, port, timeout=timeout, context=context) as server:
                 server.ehlo()
                 server.login(sender_email, password)
                 server.sendmail(sender_email, receiver_email, msg.as_string())
         else:
             logger.debug("Using SMTP with STARTTLS")
-            with smtplib.SMTP(smtp_server, port) as server:
+            with smtplib.SMTP(smtp_server, port, timeout=timeout) as server:
                 server.ehlo()
-                server.starttls()
+                server.starttls(context=context)
                 server.ehlo()
                 server.login(sender_email, password)
                 server.sendmail(sender_email, receiver_email, msg.as_string())
-        logger.info("Email sent successfully to %s", receiver_email)
+        logger.info("Email sent successfully")
     except smtplib.SMTPAuthenticationError:
-        logger.error("SMTP authentication failed for %s", sender_email)
+        logger.error("SMTP authentication failed")
         raise
     except smtplib.SMTPException as e:
-        logger.error("Failed to send email to %s: %s", receiver_email, e)
+        logger.error("Failed to send email: %s", e)
         raise
 
 
@@ -154,9 +160,9 @@ class SendMailPlugin(NotifierPluginBase):
             notification: The notification payload to deliver.
         """
         config = self.config
-        logger.info(
-            "SendMailPlugin handling topic=%s: server=%s, sender=%s, receiver=%s",
-            notification.topic,
+        logger.info("SendMailPlugin handling topic=%s", notification.topic)
+        logger.debug(
+            "SendMailPlugin target: server=%s, sender=%s, receiver=%s",
             config.server,
             config.user,
             config.receiver,
