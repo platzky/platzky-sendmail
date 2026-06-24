@@ -1,0 +1,9 @@
+{
+  "packages": {
+    ".": {
+      "release-type": "python",
+      "package-name": "platzky-sendmail",
+      "include-component-in-tag": false
+    }
+  }
+}

@@ -1,5 +1,14 @@
-from platzky_sendmail.entrypoint import SendMailPlugin
+from platzky_sendmail.plugin import (
+    DEFAULT_MAX_TOTAL_ATTACHMENT_SIZE,
+    AttachmentSizeError,
+    SendMailPlugin,
+)
 
 Plugin = SendMailPlugin
 
-__all__ = ["Plugin", "SendMailPlugin"]
+__all__ = [
+    "DEFAULT_MAX_TOTAL_ATTACHMENT_SIZE",
+    "AttachmentSizeError",
+    "Plugin",
+    "SendMailPlugin",
+]
