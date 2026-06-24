@@ -24,7 +24,3 @@ venv
 .vscode
 .idea
 *~
-
-# translation specific files
-*/locale/*/LC_MESSAGES/*.mo
-*.pot

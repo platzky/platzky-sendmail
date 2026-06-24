@@ -1,4 +1,4 @@
-.PHONY: lint dev lint-check unit-tests coverage html-cov build compile-translations update-translations
+.PHONY: lint dev lint-check unit-tests coverage html-cov build
 
 lint:
 	poetry run black .
@@ -23,12 +23,5 @@ coverage:
 html-cov: coverage
 	poetry run coverage html
 
-build: compile-translations
+build:
 	poetry build
-
-compile-translations:
-	poetry run pybabel compile -d platzky_sendmail/locale
-
-update-translations:
-	poetry run pybabel extract -F babel.cfg -o messages.pot platzky_sendmail/
-	poetry run pybabel update -i messages.pot -d platzky_sendmail/locale

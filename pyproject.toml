@@ -9,7 +9,6 @@ description = "Platzky plugin for sending emails with optional file attachments"
 authors = ["Krzysztof Kołodziński"]
 license = "MIT"
 readme = "README.md"
-include = ["platzky_sendmail/locale/**"]
 
 [tool.poetry.dependencies]
 python = "^3.14"

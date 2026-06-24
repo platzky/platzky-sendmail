@@ -49,5 +49,5 @@ make lint-check       # Check formatting/linting + types + docstrings (CI)
 make dev              # Lint + type check (pyright)
 make unit-tests       # Run all tests
 make coverage         # Tests with coverage
-make build            # Compile translations + build wheel/sdist
+make build            # Build wheel/sdist
 ```
